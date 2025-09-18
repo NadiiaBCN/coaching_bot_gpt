@@ -33,20 +33,27 @@ Obtain API keys from Pinecone and OpenAI. Get TELEGRAM_BOT_TOKEN from @BotFather
 3. Set up the `.env` file with your API keys and Telegram bot token.
 4. Run the bot:
 ```bush
-    `uvicorn main:app --reload`
+uvicorn main:app --reload
 ```
 
 The bot will start on http://127.0.0.1:8000 and index documents automatically. Check logs for "Ingestion completed. Bot is ready."
 
 ## Deployment to Heroku
 
-Install the Heroku CLI and log in: `heroku login`
-Create a Heroku app: `heroku create coachingbot`
+Install the Heroku CLI and log in: 
+```bush
+heroku login
+```
+Create a Heroku app:
+```bush
+heroku create coachingbot
+```
 Set environment variables:
-`heroku config:set PINECONE_API_KEY=your_pinecone_api_key`
-`heroku config:set OPENAI_API_KEY=your_openai_api_key`
-`heroku config:set TELEGRAM_BOT_TOKEN=your_telegram_bot_token`
-
+```bush
+heroku config:set PINECONE_API_KEY=your_pinecone_api_key
+heroku config:set OPENAI_API_KEY=your_openai_api_key
+heroku config:set TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+```
 Deploy the code:
 ```bush
 git add
