@@ -19,11 +19,11 @@ This project is a demonstration of a coaching bot that indexes documents from a 
 
 ## Environment variables:
 Create a `.env` file with:
-
+```bush
 `PINECONE_API_KEY=your_pinecone_api_key`
 `OPENAI_API_KEY=your_openai_api_key`
 `TELEGRAM_BOT_TOKEN=your_telegram_bot_token`
-
+```
 Obtain API keys from Pinecone and OpenAI. Get TELEGRAM_BOT_TOKEN from @BotFather in Telegram.
 
 ## Setup
@@ -32,10 +32,11 @@ Obtain API keys from Pinecone and OpenAI. Get TELEGRAM_BOT_TOKEN from @BotFather
 2. Create a `docs/` folder and add your documents (PDF, TXT, .docx).
 3. Set up the `.env` file with your API keys and Telegram bot token.
 4. Run the bot:
-
+```bush
     `uvicorn main:app --reload`
+```
 
-    The bot will start on http://127.0.0.1:8000 and index documents automatically. Check logs for "Ingestion completed. Bot is ready."
+The bot will start on http://127.0.0.1:8000 and index documents automatically. Check logs for "Ingestion completed. Bot is ready."
 
 ## Deployment to Heroku
 
