@@ -3,6 +3,6 @@ uvicorn
 gunicorn
 openai
 python-dotenv
-pinecone-client
+pinecone
 PyPDF2
 python-docx
