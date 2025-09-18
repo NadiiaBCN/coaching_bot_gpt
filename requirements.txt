@@ -6,3 +6,4 @@ python-dotenv
 pinecone
 PyPDF2
 python-docx
+requests

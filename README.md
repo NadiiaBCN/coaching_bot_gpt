@@ -8,45 +8,69 @@ This project is a demonstration of a coaching bot that indexes documents from a 
 - Stores embeddings in a Pinecone vector index for efficient search.
 - Provides a FastAPI endpoint for querying the knowledge base.
 - Supports incremental updates using file hash tracking.
+- Integrates with Telegram via webhook for user interaction.
 
 ## Prerequisites
 - Python 3.8 or higher.
-- Required libraries: `fastapi`, `uvicorn`, `python-dotenv`, `pinecone`, `openai`, `PyPDF2`, `python-docx`.
+- Required libraries: `fastapi`, `uvicorn`, `python-dotenv`, `pinecone`, `openai`, `PyPDF2`, `python-docx`, `requests`.
 - Install dependencies:
-
-    `pip install -r requirements.txt`
+  ```bash
+  pip install -r requirements.txt
 
 ## Environment variables:
-
 Create a `.env` file with:
+
 `PINECONE_API_KEY=your_pinecone_api_key`
 `OPENAI_API_KEY=your_openai_api_key`
+`TELEGRAM_BOT_TOKEN=your_telegram_bot_token`
 
-Obtain API keys from Pinecone and OpenAI.
+Obtain API keys from Pinecone and OpenAI. Get TELEGRAM_BOT_TOKEN from @BotFather in Telegram.
 
 ## Setup
 
 1. Clone the repository or copy the `main.py` file to your project directory.
 2. Create a `docs/` folder and add your documents (PDF, TXT, .docx).
-3. Set up the `.env` file with your API keys.
+3. Set up the `.env` file with your API keys and Telegram bot token.
 4. Run the bot:
 
     `uvicorn main:app --reload`
 
-    The bot will start on http://127.0.0.1:8000
+    The bot will start on http://127.0.0.1:8000 and index documents automatically. Check logs for "Ingestion completed. Bot is ready."
 
+## Deployment to Heroku
+
+Install the Heroku CLI and log in: `heroku login`
+Create a Heroku app: `heroku create coachingbot`
+Set environment variables:
+`heroku config:set PINECONE_API_KEY=your_pinecone_api_key`
+`heroku config:set OPENAI_API_KEY=your_openai_api_key`
+`heroku config:set TELEGRAM_BOT_TOKEN=your_telegram_bot_token`
+
+Deploy the code:
+```bush
+git add
+git commit -m "Initial deploy"
+git push heroku main
+heroku ps:scale web=1
+```
+
+## Usage
+This bot allows users to create a personalized assistant based on their own documents. Here’s how a new user can set it up after downloading the repository:
+
+- **Check Bot Status**: Visit `http://127.0.0.1:8000/` after starting the bot (returns `{"message": "Coaching bot is running"}`) to confirm it’s running locally.
+
+- **Search the Knowledge Base**:
+  - Use the `/search` endpoint with a query parameter, e.g., `http://127.0.0.1:8000/search?q=your_topic`. This returns `{"matches": [...]}` with relevant snippets from your documents.
+
+- **Interact via Telegram**:
+  - Create your own Telegram bot via @BotFather and obtain a token. Add it to your `.env` file as `TELEGRAM_BOT_TOKEN`.
+  - Set up the webhook:
+    ```bash
+    curl -X POST "https://api.telegram.org/bot<YOUR_TELEGRAM_TOKEN>/setWebhook" -d "url=http://127.0.0.1:8000/telegram-webhook"
 
 ## How It Works
-Your documents (PDF, TXT, Word) are stored on your computer in a folder. Bot automatically checks this folder: if you add a new file or edit an existing one, it immediately updates the cloud knowledge base. This saves time, as there’s no need to manually upload files. 
-
-In production, there is an option to move documents to a server or add a browser-based upload interface.
-
-The bot computes SHA256 hashes of files to detect changes.
-
-Text is extracted from supported file types and split into 500-character chunks.
-
-OpenAI embeddings are generated for each chunk.
-Vectors are upserted into the Pinecone coaching-knowledge index.
+Documents are stored in the docs/ folder on your computer. The bot automatically checks this folder, indexes new or edited files into a Pinecone vector database, and uses OpenAI to generate responses.
+Users interact via Telegram, where the bot processes queries and returns advice based on the indexed content.
 
 ## Scaling Options
 

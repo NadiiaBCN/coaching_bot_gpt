@@ -2,17 +2,20 @@ import os
 import time
 import hashlib
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
 from openai import OpenAI
 from PyPDF2 import PdfReader
 from docx import Document
+import requests  # Added for sending responses to Telegram
+import asyncio  # Added for asynchronous ingestion
 
 # ------------------ Load environment variables ------------------
 load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # ------------------ Initialize clients ------------------
 pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -23,10 +26,11 @@ INDEX_NAME = "coaching-knowledge"
 # ------------------ FastAPI ------------------
 app = FastAPI()
 
-
 # ------------------ Utilities ------------------
+
+
 def file_checksum(path: str) -> str:
-    """Compute SHA256 hash of a file"""
+    """Compute SHA256 hash of a file to detect changes"""
     hasher = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -35,7 +39,7 @@ def file_checksum(path: str) -> str:
 
 
 def load_file_hashes() -> dict:
-    """Load previous file hashes"""
+    """Load previous file hashes from file_hashes.json"""
     try:
         with open("file_hashes.json", "r") as f:
             return json.load(f)
@@ -44,13 +48,13 @@ def load_file_hashes() -> dict:
 
 
 def save_file_hashes(hashes: dict):
-    """Save file hashes"""
+    """Save file hashes to file_hashes.json"""
     with open("file_hashes.json", "w") as f:
         json.dump(hashes, f)
 
 
 def extract_text_from_file(file_path: str) -> str:
-    """Read text from txt, pdf, and docx files"""
+    """Extract text from txt, pdf, and docx files"""
     ext = os.path.splitext(file_path)[-1].lower()
     print(f"Processing file: {file_path}")
     try:
@@ -75,22 +79,20 @@ def extract_text_from_file(file_path: str) -> str:
 
 
 def embed_text(text: str):
-    """Get embedding from OpenAI"""
+    """Get embedding for text using OpenAI"""
     response = client.embeddings.create(
-        input=text,
-        model="text-embedding-3-small"
-    )
+        input=text, model="text-embedding-3-small")
     return response.data[0].embedding
 
-
 # ------------------ Pinecone integration ------------------
-def ingest_documents(docs_path: str = "docs"):
-    """Index documents in Pinecone"""
+
+
+async def ingest_documents(docs_path: str = "docs"):
+    """Asynchronously index documents in Pinecone"""
     if not os.path.exists(docs_path):
         print(f"Directory {docs_path} does not exist!")
         return
 
-    # Create index if it does not exist
     existing_indexes = pc.list_indexes().names()
     if INDEX_NAME not in existing_indexes:
         print(f"Creating index {INDEX_NAME}...")
@@ -114,7 +116,6 @@ def ingest_documents(docs_path: str = "docs"):
         current_hash = file_checksum(path)
         new_hashes[fname] = current_hash
 
-        # Process files if they are new or changed
         if fname not in current_hashes or current_hashes[fname] != current_hash:
             print(f"Processing changed file: {fname}")
             try:
@@ -122,9 +123,7 @@ def ingest_documents(docs_path: str = "docs"):
                 if not text:
                     continue
 
-                # Split text into chunks
                 chunks = [text[i:i+500] for i in range(0, len(text), 500)]
-
                 vectors = []
                 for i, chunk in enumerate(chunks):
                     vectors.append({
@@ -133,9 +132,8 @@ def ingest_documents(docs_path: str = "docs"):
                         "metadata": {"source": fname, "text": chunk}
                     })
 
-                # Upsert vectors into Pinecone index
                 if vectors:
-                    index.upsert(vectors=vectors)  # no namespace
+                    index.upsert(vectors=vectors)
                     print(f"Upserted {len(vectors)} vectors for {fname}")
 
             except Exception as e:
@@ -145,39 +143,80 @@ def ingest_documents(docs_path: str = "docs"):
 
 
 def query_index(query: str):
-    """Query Pinecone index"""
+    """Query Pinecone index for relevant matches"""
     index = pc.Index(INDEX_NAME)
     vector = embed_text(query)
-    res = index.query(
-        vector=vector,
-        top_k=3,
-        include_metadata=True
-    )
+    res = index.query(vector=vector, top_k=3, include_metadata=True)
     return res
 
 
+def generate_response(query: str, matches):
+    """Generate a natural response based on query and matches"""
+    if not matches:
+        return "Sorry, I couldn't find an answer to your query. Please try rephrasing or check the documents."
+
+    context = " ".join([match["metadata"]["text"] for match in matches])
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a coaching bot providing advice based on documents. Respond briefly and friendly."},
+            {"role": "user", "content": f"Query: {query}\nContext: {context}"}
+        ]
+    )
+    return response.choices[0].message.content
+
 # ------------------ FastAPI endpoints ------------------
+
+
 @app.get("/")
 def root():
+    """Return a status message to confirm the bot is running"""
     return {"message": "Coaching bot is running"}
 
 
 @app.get("/search")
 def search(q: str):
-    if not q:
+    """Search the knowledge base with a query parameter"""
+    if not q or len(q.strip()) < 1:
         raise HTTPException(
-            status_code=400, detail="Query parameter 'q' is required")
+            status_code=400, detail="Query parameter 'q' is required and must not be empty")
     results = query_index(q)
     return {"matches": results.get("matches", [])}
 
 
+@app.post("/telegram-webhook")
+async def telegram_webhook(request: Request):
+    """Handle incoming messages from Telegram and send responses"""
+    try:
+        data = await request.json()
+        if data.get("message"):
+            query = data["message"]["text"]
+            chat_id = data["message"]["chat"]["id"]
+            results = query_index(query)
+            response = generate_response(query, results.get("matches", []))
+
+            # Send response back to Telegram
+            telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            requests.post(telegram_url, json={
+                "chat_id": chat_id,
+                "text": response
+            })
+            return {"status": "processed"}
+        return {"status": "no message"}
+    except Exception as e:
+        print(f"Error in telegram_webhook: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # ------------------ Run ingestion at startup ------------------
+
+
 @app.on_event("startup")
 async def startup_event():
+    """Run document ingestion process asynchronously when the app starts"""
     print("Starting ingestion process...")
-    ingest_documents()
+    await ingest_documents()  # Run ingestion asynchronously
     print("Ingestion completed. Bot is ready.")
 
-
 if __name__ == "__main__":
-    ingest_documents()
+    """Run ingestion manually if script is executed directly"""
+    asyncio.run(ingest_documents())  # Use asyncio for manual run
