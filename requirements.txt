@@ -7,3 +7,4 @@ pinecone
 PyPDF2
 python-docx
 requests
+aiohttp
