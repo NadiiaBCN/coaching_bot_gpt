@@ -159,7 +159,7 @@ def query_index(query: str):
 # ------------------ FastAPI endpoints ------------------
 @app.get("/")
 def root():
-    return {"message": "Lightminds bot is running"}
+    return {"message": "Coaching bot is running"}
 
 
 @app.get("/search")
