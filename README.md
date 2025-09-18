@@ -20,9 +20,9 @@ This project is a demonstration of a coaching bot that indexes documents from a 
 ## Environment variables:
 Create a `.env` file with:
 ```bush
-`PINECONE_API_KEY=your_pinecone_api_key`
-`OPENAI_API_KEY=your_openai_api_key`
-`TELEGRAM_BOT_TOKEN=your_telegram_bot_token`
+PINECONE_API_KEY=your_pinecone_api_key
+OPENAI_API_KEY=your_openai_api_key
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 ```
 Obtain API keys from Pinecone and OpenAI. Get TELEGRAM_BOT_TOKEN from @BotFather in Telegram.
 
