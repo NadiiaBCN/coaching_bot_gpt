@@ -11,7 +11,7 @@ This project is a demonstration of a coaching bot that indexes documents from a 
 
 ## Prerequisites
 - Python 3.8 or higher.
-- Required libraries: `fastapi`, `uvicorn`, `python-dotenv`, `pinecone`, `openai`, `PyPDF2`, `python-docx`.
+- Required libraries: `fastapi`, `uvicorn`, `python-dotenv`, `pinecone-client`, `openai`, `PyPDF2`, `python-docx`.
 - Install dependencies:
 
     `pip install -r requirements.txt`

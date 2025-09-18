@@ -1,7 +1,8 @@
 fastapi
 uvicorn
+gunicorn
 openai
 python-dotenv
-pinecone
+pinecone-client
 PyPDF2
 python-docx
