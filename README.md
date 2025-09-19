@@ -26,8 +26,8 @@ A production-ready coaching bot that intelligently indexes documents from a loca
 │   Documents     │────│  Enhanced Bot    │────│   Pinecone      │
 │   (docs/)       │    │  (FastAPI)       │    │   Vector DB     │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
-                              │
-                              │
+                                │
+                                │
                        ┌──────────────────┐
                        │   Telegram       │
                        │   Integration    │
