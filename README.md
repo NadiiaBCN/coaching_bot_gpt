@@ -138,7 +138,7 @@ This approach ensures:
 ### Local Development
 1. **Clone and setup:**
 ```bash
-git clone <repository-url>
+git clone [coaching_bot_gpt](https://github.com/NadiiaBCN/coaching_bot_gpt/)
 cd coaching-bot
 pip install -r requirements.txt
 ```
