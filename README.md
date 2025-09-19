@@ -145,7 +145,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 ```
 3. **Document Preparation**
-Replace the example documents in the folder `docs/ with your own (PDF, TXT, .docx files). Ensure documents are well-structured for better chunking
+Replace the example documents in the folder `docs/` with your own (PDF, TXT, .docx files). Ensure documents are well-structured for better chunking
 
 4. **Run the application:**
 ```bash
