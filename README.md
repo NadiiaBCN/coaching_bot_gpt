@@ -611,8 +611,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - **Pinecone** for vector database infrastructure  
 - **FastAPI** for the robust web framework
 - **Telegram** for bot platform and API
-
----
-***Built with ❤️ for the AI community***
-
-*Ready to create your personalized AI assistant? Star this repo and start building!* ⭐
