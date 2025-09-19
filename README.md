@@ -22,6 +22,13 @@ A production-ready coaching bot that intelligently indexes documents from a loca
 - **Automatic Vector Cleanup**: Removes obsolete vectors when files are deleted or modified
 - **Smart File Management**: Detects file changes and replaces old vectors with updated content
 
+## <span style="color:#6699FF">Technology Stack</span> 
+
+- **OpenAI** for GPT models and embeddings API
+- **Pinecone** for vector database infrastructure  
+- **FastAPI** for the robust web framework
+- **Telegram** for bot platform and API
+
 ## <span style="color:#6699FF">Architecture</span> 
 
 ```
@@ -55,7 +62,7 @@ Install required packages:
 pip install -r requirements.txt
 ```
 
-**requirements.txt:**
+requirements.txt:
 ```
 fastapi
 uvicorn
@@ -69,19 +76,7 @@ requests
 aiohttp
 ```
 
-## <span style="color:#6699FF">Setup & Configuration</span> 
-
-### 1. Environment Configuration
-Create a `.env` file in the project root:
-
-```bash
-# Required API Keys
-PINECONE_API_KEY=your_pinecone_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-```
-
-### 2. Project Structure
+### Project Structure
 ```
 coaching-bot/
 ├── main.py                 # Main application file
@@ -95,10 +90,6 @@ coaching-bot/
 └── README.md
 ```
 
-### 3. Document Preparation
-- Create a `docs/` folder in your project directory
-- Add your documents (PDF, TXT, .docx files)
-- Ensure documents are well-structured for better chunking
 
 ## <span style="color:#6699FF">Vector Management & File Cleanup</span>  
 
@@ -129,13 +120,14 @@ File Deleted  → Missing from docs/ → Delete All Vectors → Update Tracking 
 New File      → New Hash → Process Content → Add to Index
 ```
 
-This approach ensures:
+### This approach ensures:
 - **No Vector Pollution**: Old content doesn't interfere with searches
 - **Accurate Results**: Search results always reflect current document state
 - **Efficient Storage**: Only relevant vectors consume Pinecone resources
 - **Cost Optimization**: Reduces unnecessary vector storage costs
 
-### Local Development
+## <span style="color:#6699FF">Local Development</span> 
+
 1. **Clone and setup:**
 ```bash
 git clone https://github.com/NadiiaBCN/coaching_bot_gpt
@@ -144,12 +136,18 @@ pip install -r requirements.txt
 ```
 
 2. **Configure environment:**
-```bash
-cp .env.example .env
-# Edit .env with your API keys
-```
+Create a `.env` file in the project root:
 
-3. **Run the application:**
+```bash
+# Required API Keys
+PINECONE_API_KEY=your_pinecone_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+```
+3. **Document Preparation**
+Replace the example documents in the folder `docs/ with your own (PDF, TXT, .docx files). Ensure documents are well-structured for better chunking
+
+4. **Run the application:**
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -296,18 +294,14 @@ curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
 ### Example Conversation
 ```
 User: /start
-Bot: Welcome to the Enhanced Coaching Bot! 🤖
+Bot: Welcome to the Enhanced Coaching Bot!
 
 I can help answer questions based on your uploaded documents. Just send me your question and I'll search through the knowledge base.
 
-User: How can I manage my time better?
-Bot: Based on your documents, here are effective time management strategies:
+User: Why should sugary drinks be avoided?
+Bot: Based on the information provided in the documents, here are some practical recommendations regarding why sugary drinks should be avoided:
 
-1. **Time Blocking**: Schedule specific time slots for different activities...
-2. **Priority Matrix**: Use the Eisenhower method to categorize tasks...
-3. **Eliminate Distractions**: Create a focused work environment...
-
-*Sources: time_management.pdf, productivity_tips.docx*
+1. Health Risks: Sugary drinks can contribute to health issues like high blood pressure, cardiovascular problems, and weight gain. If you fall into these categories...
 ```
 
 ## <span style="color:#6699FF">Deployment</span>
@@ -405,20 +399,16 @@ Set up monitoring for the `/health` endpoint:
 #!/bin/bash
 response=$(curl -s http://localhost:8000/health)
 if [[ $response == *"healthy"* ]]; then
-    echo "✅ Bot is healthy"
+    echo "Bot is healthy"
 else
-    echo "❌ Bot is unhealthy"
+    echo "Bot is unhealthy"
     exit 1
 fi
 ```
 
 ## <span style="color:#6699FF">Troubleshooting</span>  
 
-### Common Issues
-
-### Vector Cleanup and Management
-
-#### 1. Documents Not Processing
+### Documents Not Processing
 **Symptoms:** Files in `docs/` folder not being indexed
 
 **Solutions:**
@@ -427,7 +417,7 @@ fi
 - Check logs for specific error messages
 - Ensure files aren't corrupted
 
-#### 2. Vectors Not Cleaning Up
+### Vectors Not Cleaning Up
 **Symptoms:** Old vectors remain after deleting files
 
 **Solutions:**
@@ -442,7 +432,7 @@ curl -X POST http://localhost:8000/cleanup
 uvicorn main:app --reload
 ```
 
-#### 3. File Changes Not Reflected
+### File Changes Not Reflected
 **Symptoms:** Search results show old content after updating files
 
 **Solutions:**
@@ -451,7 +441,7 @@ uvicorn main:app --reload
 - Monitor logs for file processing messages
 - Force cleanup and restart if needed
 
-#### 4. Pinecone Connection Issues
+### Pinecone Connection Issues
 **Symptoms:** Files in `docs/` folder not being indexed
 
 **Solutions:**
@@ -460,23 +450,7 @@ uvicorn main:app --reload
 - Check logs for specific error messages
 - Ensure files aren't corrupted
 
-#### 2. Pinecone Connection Issues
-**Symptoms:** `Health check failed` or connection errors
-
-**Solutions:**
-```bash
-# Verify API key
-curl -H "Api-Key: YOUR_PINECONE_KEY" https://api.pinecone.io/
-  
-# Check index status
-python -c "
-from pinecone import Pinecone
-pc = Pinecone(api_key='YOUR_KEY')
-print(pc.list_indexes())
-"
-```
-
-#### 3. Telegram Webhook Issues
+### Telegram Webhook Issues
 **Symptoms:** Bot not responding to messages
 
 **Solutions:**
@@ -491,7 +465,7 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/deleteWebhook"
 # Modify telegram integration to use polling
 ```
 
-#### 4. OpenAI API Errors
+### OpenAI API Errors
 **Symptoms:** Embedding or response generation failures
 
 **Solutions:**
@@ -499,8 +473,7 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/deleteWebhook"
 - Monitor rate limits: `openai.error.RateLimitError`
 - Verify model availability: `text-embedding-3-small`, `gpt-3.5-turbo`
 
-### Performance Optimization
-
+## <span style="color:#6699FF">Performance Optimization </span> 
 1. **Large Document Collections:**
 ```python
 # Increase batch size for faster processing
@@ -521,7 +494,7 @@ Config.MAX_RESPONSE_TOKENS = 300
 
 ## <span style="color:#6699FF">Scaling Options</span>  
 
-### Database Alternatives
+### 1. Database Alternatives
 
 #### FAISS (Local Vector DB)
 For offline or high-privacy scenarios:
@@ -541,7 +514,7 @@ import weaviate
 client = weaviate.Client("http://localhost:8080")
 ```
 
-### Model Upgrades
+### 2. Model Upgrades
 
 #### Better Embeddings
 ```python
@@ -557,57 +530,7 @@ Config.LLM_MODEL = "gpt-4"
 Config.MAX_RESPONSE_TOKENS = 1000
 ```
 
-## <span style="color:#6699FF">Contributing</span> 
-
-We welcome contributions! Here's how to get started:
-
-1. **Fork the repository**
-2. **Create a feature branch:**
-```bash
-git checkout -b feature/amazing-improvement
-```
-
-3. **Make your changes** following these guidelines:
-   - Add comprehensive error handling
-   - Include unit tests for new features
-   - Update documentation
-   - Follow existing code style
-
-4. **Test thoroughly:**
-```bash
-# Run tests (when implemented)
-pytest tests/
-
-# Test with different document types
-# Test Telegram integration
-# Verify API endpoints
-```
-
-5. **Submit a pull request** with:
-   - Clear description of changes
-   - Before/after behavior
-   - Testing steps
-
-### Development Setup
-```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Set up pre-commit hooks
-pre-commit install
-
-# Run code formatting
-black main.py
-flake8 main.py
-```
-
 ## <span style="color:#6699FF">License</span>  
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## <span style="color:#6699FF">Acknowledgments</span> 
-
-- **OpenAI** for GPT models and embeddings API
-- **Pinecone** for vector database infrastructure  
-- **FastAPI** for the robust web framework
-- **Telegram** for bot platform and API
