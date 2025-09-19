@@ -57,12 +57,7 @@ A production-ready coaching bot that intelligently indexes documents from a loca
 - **Telegram Bot Token**: Create bot via [@BotFather](https://t.me/botfather)
 
 ### Dependencies
-Install required packages:
-```bash
-pip install -r requirements.txt
-```
-
-requirements.txt:
+All dependencies can be found in the requirements.txt file:
 ```
 fastapi
 uvicorn
@@ -75,21 +70,6 @@ python-docx
 requests
 aiohttp
 ```
-
-### Project Structure
-```
-coaching-bot/
-├── main.py                 # Main application file
-├── requirements.txt        # Dependencies
-├── .env                    # Environment variables
-├── file_hashes.json        # Auto-generated file tracking
-├── docs/                   # Your documents folder
-│   ├── coaching_guide.pdf
-│   ├── best_practices.docx
-│   └── tips.txt
-└── README.md
-```
-
 
 ## <span style="color:#6699FF">Vector Management & File Cleanup</span>  
 
@@ -127,6 +107,20 @@ New File      → New Hash → Process Content → Add to Index
 - **Cost Optimization**: Reduces unnecessary vector storage costs
 
 ## <span style="color:#6699FF">Local Development</span> 
+
+### Project Structure
+```
+coaching-bot/
+├── main.py                 # Main application file
+├── requirements.txt        # Dependencies
+├── .env                    # Environment variables
+├── file_hashes.json        # Auto-generated file tracking
+├── docs/                   # Your documents folder
+│   ├── coaching_guide.pdf
+│   ├── best_practices.docx
+│   └── tips.txt
+└── README.md
+```
 
 1. **Clone and setup:**
 ```bash
