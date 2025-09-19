@@ -368,7 +368,7 @@ class Config:
     CHUNK_OVERLAP = 50        # Overlap between chunks
     TOP_K = 3                 # Number of search results
     MAX_QUERY_LENGTH = 1000   # Maximum query length
-    MAX_RESPONSE_TOKENS = 500 # Maximum response length
+    MAX_RESPONSE_TOKENS = 200 # Maximum response length
     TEMPERATURE = 0.7         # Response creativity (0-1)
 ```
 
