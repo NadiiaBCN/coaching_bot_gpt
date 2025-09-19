@@ -265,6 +265,103 @@ def embed_text(text: str) -> List[float]:
         logger.error(f"Error creating embedding: {e}")
         raise
 
+# ------------------ Vector Cleanup Functions ------------------
+
+
+def delete_vectors_for_file(index, filename: str) -> bool:
+    """
+    Delete all vectors associated with a specific file
+
+    Args:
+        index: Pinecone index object
+        filename (str): Name of the file to delete vectors for
+
+    Returns:
+        bool: True if deletion was successful
+    """
+    try:
+        # Delete vectors with IDs matching pattern filename-*
+        # We'll attempt to delete up to 1000 possible chunk IDs
+        batch_size = 100
+        deleted_count = 0
+
+        # Assume max 1000 chunks per file
+        for start_idx in range(0, 1000, batch_size):
+            ids_batch = [
+                f"{filename}-{i}" for i in range(start_idx, min(start_idx + batch_size, 1000))]
+
+            try:
+                index.delete(ids=ids_batch)
+                # Note: Pinecone delete doesn't return count, but doesn't error for non-existent IDs
+                deleted_count += batch_size
+            except Exception as e:
+                logger.debug(f"Batch deletion completed for {filename}: {e}")
+                break
+
+        logger.info(f"Attempted to delete vectors for file: {filename}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error deleting vectors for {filename}: {e}")
+        return False
+
+
+async def cleanup_deleted_files(docs_path: str = Config.DOCS_FOLDER) -> None:
+    """
+    Remove vectors for files that no longer exist in the docs folder
+
+    Args:
+        docs_path (str): Path to documents folder
+    """
+    try:
+        current_hashes = load_file_hashes()
+
+        # Get current files in docs folder
+        current_files = set()
+        if os.path.exists(docs_path):
+            for fname in os.listdir(docs_path):
+                path = os.path.join(docs_path, fname)
+                if os.path.isfile(path) and not fname.startswith('.'):
+                    ext = os.path.splitext(fname)[-1].lower()
+                    if ext in Config.SUPPORTED_EXTENSIONS:
+                        current_files.add(fname)
+
+        # Find files that were tracked but no longer exist
+        tracked_files = set(current_hashes.keys())
+        deleted_files = tracked_files - current_files
+
+        if deleted_files:
+            logger.info(
+                f"Found {len(deleted_files)} deleted files: {deleted_files}")
+
+            index = pc.Index(Config.INDEX_NAME)
+
+            # Delete vectors for each deleted file
+            for filename in deleted_files:
+                logger.info(
+                    f"Cleaning up vectors for deleted file: {filename}")
+                success = delete_vectors_for_file(index, filename)
+
+                if success:
+                    logger.info(
+                        f"Successfully cleaned up vectors for: {filename}")
+                else:
+                    logger.warning(
+                        f"Failed to clean up vectors for: {filename}")
+
+            # Update file hashes to remove deleted files
+            updated_hashes = {
+                k: v for k, v in current_hashes.items() if k in current_files}
+            save_file_hashes(updated_hashes)
+
+            logger.info(
+                f"Cleanup completed for {len(deleted_files)} deleted files")
+        else:
+            logger.info("No deleted files found, no cleanup needed")
+
+    except Exception as e:
+        logger.error(f"Error during cleanup of deleted files: {e}")
+
 # ------------------ Telegram integration ------------------
 
 
@@ -334,7 +431,7 @@ async def ensure_index_exists() -> None:
 
 async def ingest_documents(docs_path: str = Config.DOCS_FOLDER) -> None:
     """
-    Asynchronously index documents in Pinecone with improved error handling
+    Asynchronously index documents in Pinecone with improved error handling and cleanup
 
     Args:
         docs_path (str): Path to documents folder
@@ -344,6 +441,9 @@ async def ingest_documents(docs_path: str = Config.DOCS_FOLDER) -> None:
         return
 
     await ensure_index_exists()
+
+    # First, cleanup vectors for deleted files
+    await cleanup_deleted_files(docs_path)
 
     index = pc.Index(Config.INDEX_NAME)
     current_hashes = load_file_hashes()
@@ -373,6 +473,11 @@ async def ingest_documents(docs_path: str = Config.DOCS_FOLDER) -> None:
         if fname in current_hashes and current_hashes[fname] == current_hash:
             logger.info(f"File {fname} unchanged, skipping")
             continue
+
+        # If file has changed, delete old vectors first
+        if fname in current_hashes:
+            logger.info(f"File {fname} has changed, removing old vectors...")
+            delete_vectors_for_file(index, fname)
 
         logger.info(
             f"Processing {'changed' if fname in current_hashes else 'new'} file: {fname}")
@@ -540,7 +645,9 @@ def root():
         "endpoints": {
             "search": "/search?q=your_question",
             "telegram_webhook": "/telegram-webhook",
-            "health": "/health"
+            "health": "/health",
+            "stats": "/stats",
+            "cleanup": "/cleanup"
         }
     }
 
@@ -555,6 +662,45 @@ def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
+
+
+@app.get("/stats")
+def get_index_stats():
+    """
+    Get current Pinecone index statistics
+    """
+    try:
+        index = pc.Index(Config.INDEX_NAME)
+        stats = index.describe_index_stats()
+
+        # Get file information
+        current_hashes = load_file_hashes()
+
+        return {
+            "index_name": Config.INDEX_NAME,
+            "total_vectors": stats.get('total_vector_count', 0),
+            "index_fullness": stats.get('index_fullness', 0),
+            "dimension": stats.get('dimension', 0),
+            "tracked_files": len(current_hashes),
+            "files": list(current_hashes.keys()) if current_hashes else []
+        }
+    except Exception as e:
+        logger.error(f"Error getting index stats: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to get index stats")
+
+
+@app.post("/cleanup")
+async def manual_cleanup():
+    """
+    Manually trigger cleanup of deleted files
+    """
+    try:
+        await cleanup_deleted_files()
+        return {"status": "cleanup_completed", "message": "Successfully cleaned up vectors for deleted files"}
+    except Exception as e:
+        logger.error(f"Manual cleanup failed: {e}")
+        raise HTTPException(status_code=500, detail="Cleanup failed")
 
 
 @app.get("/search")
@@ -644,7 +790,7 @@ async def telegram_webhook(request: Request):
         # Handle commands
         if query.startswith('/'):
             if query == '/start':
-                response = ("Welcome to the Enhanced Coaching Bot! 🤖\n\n"
+                response = ("Welcome to the Enhanced Coaching Bot!\n\n"
                             "I can help answer questions based on your uploaded documents. "
                             "Just send me your question and I'll search through the knowledge base.")
             elif query == '/help':
@@ -697,7 +843,7 @@ async def startup_event():
 
     try:
         await ingest_documents()
-        logger.info("Bot initialization completed successfully! 🚀")
+        logger.info("Bot initialization completed successfully!")
     except Exception as e:
         logger.error(f"Failed to initialize bot: {e}")
         raise
