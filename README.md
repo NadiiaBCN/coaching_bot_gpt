@@ -173,12 +173,10 @@ INFO - Starting Enhanced Coaching Bot...
 INFO - Processing new file: coaching_guide.pdf
 INFO - Successfully processed coaching_guide.pdf: 45 vectors created
 INFO - Ingestion completed: 3 files processed, 0 files skipped
-INFO - Bot initialization completed successfully! 🚀
+INFO - Bot initialization completed successfully!
 ```
 
 ## <span style="color:#6699FF">API Endpoints</span>   
-
-### Core Endpoints
 
 #### `GET /`
 Returns bot status and available endpoints.
@@ -534,3 +532,7 @@ Config.MAX_RESPONSE_TOKENS = 1000
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+
+
+
+## <span style="color:#6699FF">Contributions are welcome 🤝</span> 
