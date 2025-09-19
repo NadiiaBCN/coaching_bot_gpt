@@ -1,8 +1,8 @@
-# Enhanced Coaching Bot GPT
+# <span style="color:#FFCC66">Enhanced Coaching Bot GPT</span>  
 
 A production-ready coaching bot that intelligently indexes documents from a local folder and creates a powerful vector database using Pinecone. The bot features automatic knowledge base updates, smart document processing, and seamless Telegram integration for user interactions.
 
-## Features
+## <span style="color:#6699FF">Features</span>  
 
 ### Core Functionality
 - **Multi-format Support**: Processes PDF, TXT, and Word (.docx) documents from local `docs/` folder
@@ -10,6 +10,7 @@ A production-ready coaching bot that intelligently indexes documents from a loca
 - **Intelligent Text Chunking**: Respects sentence boundaries for better semantic understanding
 - **Vector Search**: Stores embeddings in Pinecone vector database for efficient similarity search
 - **Incremental Updates**: Only processes changed files, saving time and API costs
+- **Automatic Cleanup**: Removes vectors for deleted files and replaces vectors for modified files
 
 ### Advanced Capabilities
 - **Production-Ready Architecture**: Comprehensive error handling, logging, and monitoring
@@ -18,23 +19,25 @@ A production-ready coaching bot that intelligently indexes documents from a loca
 - **Batch Processing**: Efficient handling of large document collections
 - **Health Monitoring**: Built-in health checks and system status endpoints
 - **Smart Response Generation**: Context-aware responses with source attribution
+- **Automatic Vector Cleanup**: Removes obsolete vectors when files are deleted or modified
+- **Smart File Management**: Detects file changes and replaces old vectors with updated content
 
-## Architecture
+## <span style="color:#6699FF">Architecture</span> 
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Documents     │────│  Enhanced Bot    │────│   Pinecone      │
 │   (docs/)       │    │  (FastAPI)       │    │   Vector DB     │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │
-                                │
+                              │
+                              │
                        ┌──────────────────┐
                        │   Telegram       │
                        │   Integration    │
                        └──────────────────┘
 ```
 
-## Prerequisites
+## <span style="color:#6699FF">Prerequisites</span>  
 
 ### System Requirements
 - Python 3.8 or higher
@@ -66,7 +69,7 @@ requests
 aiohttp
 ```
 
-## Setup & Configuration
+## <span style="color:#6699FF">Setup & Configuration</span> 
 
 ### 1. Environment Configuration
 Create a `.env` file in the project root:
@@ -97,7 +100,40 @@ coaching-bot/
 - Add your documents (PDF, TXT, .docx files)
 - Ensure documents are well-structured for better chunking
 
-## Quick Start
+## <span style="color:#6699FF">Vector Management & File Cleanup</span>  
+
+### Intelligent Vector Management
+The Enhanced Coaching Bot features sophisticated vector management that ensures your Pinecone database stays clean and up-to-date:
+
+#### 1. **Automatic Cleanup on Startup**
+- Compares files in `docs/` folder with tracked files in `file_hashes.json`
+- Automatically removes vectors for deleted files from Pinecone
+- Updates tracking file to reflect current state
+
+#### 2. **Smart File Update Handling**
+- When a file is modified (detected by SHA256 hash change), the bot:
+  - First deletes all old vectors associated with that file
+  - Then processes and indexes the updated content
+  - Ensures no duplicate or outdated vectors remain
+
+#### 3. **Manual Cleanup Options**
+- Use the `/cleanup` API endpoint for manual cleanup
+- Monitor cleanup operations through detailed logging
+- Get statistics via `/stats` endpoint
+
+### File Change Detection Process
+
+```
+File Modified → Hash Changed → Delete Old Vectors → Process New Content → Update Index
+File Deleted  → Missing from docs/ → Delete All Vectors → Update Tracking File
+New File      → New Hash → Process Content → Add to Index
+```
+
+This approach ensures:
+- **No Vector Pollution**: Old content doesn't interfere with searches
+- **Accurate Results**: Search results always reflect current document state
+- **Efficient Storage**: Only relevant vectors consume Pinecone resources
+- **Cost Optimization**: Reduces unnecessary vector storage costs
 
 ### Local Development
 1. **Clone and setup:**
@@ -142,7 +178,7 @@ INFO - Ingestion completed: 3 files processed, 0 files skipped
 INFO - Bot initialization completed successfully! 🚀
 ```
 
-## API Endpoints
+## <span style="color:#6699FF">API Endpoints</span>   
 
 ### Core Endpoints
 
@@ -160,6 +196,42 @@ System health check for monitoring.
 **Example:**
 ```bash
 curl http://localhost:8000/health
+```
+
+#### `GET /stats`
+Get comprehensive index statistics and file information.
+
+**Example:**
+```bash
+curl http://localhost:8000/stats
+```
+
+**Response:**
+```json
+{
+  "index_name": "coaching-knowledge",
+  "total_vectors": 247,
+  "index_fullness": 0.02,
+  "dimension": 1536,
+  "tracked_files": 5,
+  "files": ["guide.pdf", "tips.docx", "strategies.txt"]
+}
+```
+
+#### `POST /cleanup`
+Manually trigger cleanup of deleted file vectors.
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/cleanup
+```
+
+**Response:**
+```json
+{
+  "status": "cleanup_completed",
+  "message": "Successfully cleaned up vectors for deleted files"
+}
 ```
 
 #### `GET /search?q=<query>`
@@ -183,7 +255,7 @@ curl "http://localhost:8000/search?q=How to improve productivity"
 #### `POST /telegram-webhook`
 Handles Telegram bot interactions (set up automatically).
 
-## Telegram Integration
+## <span style="color:#6699FF">Telegram Integration</span>   
 
 ### Setting Up Telegram Bot
 
@@ -238,7 +310,7 @@ Bot: Based on your documents, here are effective time management strategies:
 *Sources: time_management.pdf, productivity_tips.docx*
 ```
 
-## Deployment
+## <span style="color:#6699FF">Deployment</span>
 
 ### Heroku Deployment
 
@@ -300,7 +372,7 @@ docker build -t coaching-bot .
 docker run -p 8000:8000 --env-file .env coaching-bot
 ```
 
-## Configuration Options
+## <span style="color:#6699FF">Configuration Options</span> 
 
 The bot can be customized via the `Config` class in `main.py`:
 
@@ -314,7 +386,7 @@ class Config:
     TEMPERATURE = 0.7         # Response creativity (0-1)
 ```
 
-## Monitoring & Logging
+## <span style="color:#6699FF">Monitoring & Logging</span> 
 
 ### Log Levels
 ```python
@@ -333,18 +405,53 @@ Set up monitoring for the `/health` endpoint:
 #!/bin/bash
 response=$(curl -s http://localhost:8000/health)
 if [[ $response == *"healthy"* ]]; then
-    echo "Bot is healthy"
+    echo "✅ Bot is healthy"
 else
-    echo "Bot is unhealthy"
+    echo "❌ Bot is unhealthy"
     exit 1
 fi
 ```
 
-## Troubleshooting
+## <span style="color:#6699FF">Troubleshooting</span>  
 
 ### Common Issues
 
+### Vector Cleanup and Management
+
 #### 1. Documents Not Processing
+**Symptoms:** Files in `docs/` folder not being indexed
+
+**Solutions:**
+- Check file permissions: `chmod 644 docs/*`
+- Verify supported formats: `.txt`, `.pdf`, `.docx` only
+- Check logs for specific error messages
+- Ensure files aren't corrupted
+
+#### 2. Vectors Not Cleaning Up
+**Symptoms:** Old vectors remain after deleting files
+
+**Solutions:**
+```bash
+# Check current index statistics
+curl http://localhost:8000/stats
+
+# Manually trigger cleanup
+curl -X POST http://localhost:8000/cleanup
+
+# Restart the bot to trigger automatic cleanup
+uvicorn main:app --reload
+```
+
+#### 3. File Changes Not Reflected
+**Symptoms:** Search results show old content after updating files
+
+**Solutions:**
+- Check if file hash actually changed: `cat file_hashes.json`
+- Verify file is properly saved and accessible
+- Monitor logs for file processing messages
+- Force cleanup and restart if needed
+
+#### 4. Pinecone Connection Issues
 **Symptoms:** Files in `docs/` folder not being indexed
 
 **Solutions:**
@@ -412,7 +519,7 @@ Config.TOP_K = 2
 Config.MAX_RESPONSE_TOKENS = 300
 ```
 
-## Scaling Options
+## <span style="color:#6699FF">Scaling Options</span>  
 
 ### Database Alternatives
 
@@ -450,7 +557,7 @@ Config.LLM_MODEL = "gpt-4"
 Config.MAX_RESPONSE_TOKENS = 1000
 ```
 
-## Contributing
+## <span style="color:#6699FF">Contributing</span> 
 
 We welcome contributions! Here's how to get started:
 
@@ -494,13 +601,18 @@ black main.py
 flake8 main.py
 ```
 
-## License
+## <span style="color:#6699FF">License</span>  
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## <span style="color:#6699FF">Acknowledgments</span> 
 
 - **OpenAI** for GPT models and embeddings API
 - **Pinecone** for vector database infrastructure  
 - **FastAPI** for the robust web framework
 - **Telegram** for bot platform and API
+
+---
+***Built with ❤️ for the AI community***
+
+*Ready to create your personalized AI assistant? Star this repo and start building!* ⭐
