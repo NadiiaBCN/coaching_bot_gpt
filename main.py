@@ -24,7 +24,7 @@ class Config:
     EMBEDDING_MODEL = "text-embedding-3-small"
     LLM_MODEL = "gpt-3.5-turbo"
     MAX_QUERY_LENGTH = 1000
-    MAX_RESPONSE_TOKENS = 500
+    MAX_RESPONSE_TOKENS = 200
     TEMPERATURE = 0.7
 
     # File processing settings
